@@ -16,7 +16,8 @@ env:
   UBOOT_BURNIMG: eMMC.burn.img
   ARMBIAN_REPO: armbian/build
   ARMBIAN_REF: main
-  PATCHES: 4077,5076,5082
+  PATCHES: 4077,5076
+  PATCHES_DISABLED: 5082
 
 jobs:
   prepare:
@@ -111,9 +112,14 @@ jobs:
       - name: "Apply patch ${{ env.PATCHES }}"
         if: ${{ env.PATCHES }}
         run: |
+          echo "::group::Download"
           curl -L -O "https://github.com/armbian/build/pull/{${PATCHES}}.patch"
+          echo "::endgroup::"
+
           for file in *.patch; do
+            echo "::group::Applying $file"
             patch --batch -p1 -N <"$file"
+            echo "::endgroup::"
           done
 
       - name: Build
@@ -148,8 +154,10 @@ jobs:
         RELEASE:
           # - focal # Ubuntu 20.04 LTS
           - jammy # Ubuntu 22.04 LTS
+          # - lunar # Ubuntu 23.04
           # - buster # Debian 10
           - bullseye # Debian 11
+          - bookworm # Debian 12
           - sid # Debian unstable
         TYPE:
           - minimal
@@ -160,6 +168,9 @@ jobs:
             DESKTOP_ENVIRONMENT: xfce
             DESKTOP_ENVIRONMENT_CONFIG_NAME: config_base
             DESKTOP_APPGROUPS_SELECTED: ""
+        exclude:
+          - RELEASE: sid
+            TYPE: desktop
 
     steps:
       - name: Import env
@@ -175,9 +186,14 @@ jobs:
       - name: "Apply patch ${{ env.PATCHES }}"
         if: ${{ env.PATCHES }}
         run: |
+          echo "::group::Download"
           curl -L -O "https://github.com/armbian/build/pull/{${PATCHES}}.patch"
+          echo "::endgroup::"
+
           for file in *.patch; do
+            echo "::group::Applying $file"
             patch --batch -p1 -N <"$file"
+            echo "::endgroup::"
           done
 
       - name: Download debs
